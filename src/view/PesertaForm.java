@@ -1,116 +1,322 @@
 package view;
 
-import controller.PesertaController;
 import database.Koneksi;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 
 public class PesertaForm extends JFrame {
 
+    JTextField txtId;
     JTextField txtNama;
-    JTextField txtJurusan;
+    JTextField txtEmail;
+    JTextField txtNoHp;
 
     JTable tabel;
     DefaultTableModel model;
 
-    PesertaController controller =
-            new PesertaController();
-
     public PesertaForm() {
 
         setTitle("Data Peserta");
-        setSize(700,500);
+        setSize(800,550);
         setLayout(null);
 
-        JLabel lblNama =
-                new JLabel("Nama Peserta");
-        lblNama.setBounds(20,20,100,25);
+        JLabel lblId = new JLabel("ID");
+        lblId.setBounds(20,20,100,25);
 
-        txtNama =
-                new JTextField();
-        txtNama.setBounds(130,20,200,25);
+        txtId = new JTextField();
+        txtId.setBounds(130,20,200,25);
+        txtId.setEditable(false);
 
-        JLabel lblJurusan =
-                new JLabel("Jurusan");
-        lblJurusan.setBounds(20,60,100,25);
+        JLabel lblNama = new JLabel("Nama Peserta");
+        lblNama.setBounds(20,60,100,25);
 
-        txtJurusan =
-                new JTextField();
-        txtJurusan.setBounds(130,60,200,25);
+        txtNama = new JTextField();
+        txtNama.setBounds(130,60,200,25);
 
-        JButton btnTambah =
-                new JButton("Tambah");
-        btnTambah.setBounds(20,110,100,30);
+        JLabel lblEmail = new JLabel("Email");
+        lblEmail.setBounds(20,100,100,25);
 
-        JButton btnHapus =
-                new JButton("Hapus");
-        btnHapus.setBounds(130,110,100,30);
+        txtEmail = new JTextField();
+        txtEmail.setBounds(130,100,200,25);
+
+        JLabel lblNoHp = new JLabel("No HP");
+        lblNoHp.setBounds(20,140,100,25);
+
+        txtNoHp = new JTextField();
+        txtNoHp.setBounds(130,140,200,25);
+
+        JButton btnTambah = new JButton("Tambah");
+        JButton btnUpdate = new JButton("Update");
+        JButton btnHapus = new JButton("Hapus");
+        JButton btnReset = new JButton("Reset");
+
+        btnTambah.setBounds(20,190,100,30);
+        btnUpdate.setBounds(130,190,100,30);
+        btnHapus.setBounds(240,190,100,30);
+        btnReset.setBounds(350,190,100,30);
 
         String[] kolom = {
                 "ID",
                 "Nama Peserta",
-                "Jurusan"
+                "Email",
+                "No HP"
         };
 
-        model =
-                new DefaultTableModel(kolom,0);
+        model = new DefaultTableModel(kolom,0);
 
-        tabel =
-                new JTable(model);
+        tabel = new JTable(model);
+
+        tabel.addMouseListener(
+                new java.awt.event.MouseAdapter() {
+
+                    public void mouseClicked(
+                            java.awt.event.MouseEvent evt) {
+
+                        int row =
+                                tabel.getSelectedRow();
+
+                        txtId.setText(
+                                model.getValueAt(row,0)
+                                        .toString()
+                        );
+
+                        txtNama.setText(
+                                model.getValueAt(row,1)
+                                        .toString()
+                        );
+
+                        txtEmail.setText(
+                                model.getValueAt(row,2)
+                                        .toString()
+                        );
+
+                        txtNoHp.setText(
+                                model.getValueAt(row,3)
+                                        .toString()
+                        );
+                    }
+                });
 
         JScrollPane scroll =
                 new JScrollPane(tabel);
 
         scroll.setBounds(
                 20,
-                170,
-                640,
-                250
+                250,
+                740,
+                220
         );
 
+        // TAMBAH
         btnTambah.addActionListener(e -> {
 
-            controller.tambahPeserta(
-                    txtNama.getText(),
-                    txtJurusan.getText()
-            );
+            try {
 
-            loadData();
+                Connection con =
+                        Koneksi.getConnection();
 
-            txtNama.setText("");
-            txtJurusan.setText("");
+                String sql =
+                        "INSERT INTO peserta(nama_peserta,email,no_hp) VALUES(?,?,?)";
 
-        });
+                PreparedStatement ps =
+                        con.prepareStatement(sql);
 
-        btnHapus.addActionListener(e -> {
+                ps.setString(
+                        1,
+                        txtNama.getText()
+                );
 
-            int baris = tabel.getSelectedRow();
+                ps.setString(
+                        2,
+                        txtEmail.getText()
+                );
 
-            if(baris != -1) {
-                model.removeRow(baris);
+                ps.setString(
+                        3,
+                        txtNoHp.getText()
+                );
+
+                ps.executeUpdate();
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Data berhasil ditambahkan"
+                );
+
+                loadData();
+                resetForm();
+
+            } catch(Exception ex) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        ex.getMessage()
+                );
+
             }
 
         });
 
+        // UPDATE
+        btnUpdate.addActionListener(e -> {
+
+            if(txtId.getText().isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Pilih data terlebih dahulu!"
+                );
+
+                return;
+            }
+
+            try {
+
+                Connection con =
+                        Koneksi.getConnection();
+
+                String sql =
+                        "UPDATE peserta SET nama_peserta=?, email=?, no_hp=? WHERE id_peserta=?";
+
+                PreparedStatement ps =
+                        con.prepareStatement(sql);
+
+                ps.setString(
+                        1,
+                        txtNama.getText()
+                );
+
+                ps.setString(
+                        2,
+                        txtEmail.getText()
+                );
+
+                ps.setString(
+                        3,
+                        txtNoHp.getText()
+                );
+
+                ps.setInt(
+                        4,
+                        Integer.parseInt(
+                                txtId.getText()
+                        )
+                );
+
+                ps.executeUpdate();
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Data berhasil diupdate"
+                );
+
+                loadData();
+                resetForm();
+
+            } catch(Exception ex) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        ex.getMessage()
+                );
+
+            }
+
+        });
+
+        // HAPUS
+        btnHapus.addActionListener(e -> {
+
+            if(txtId.getText().isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Pilih data terlebih dahulu!"
+                );
+
+                return;
+            }
+
+            int pilih =
+                    JOptionPane.showConfirmDialog(
+                            null,
+                            "Yakin ingin menghapus?",
+                            "Konfirmasi",
+                            JOptionPane.YES_NO_OPTION
+                    );
+
+            if(pilih == JOptionPane.YES_OPTION) {
+
+                try {
+
+                    Connection con =
+                            Koneksi.getConnection();
+
+                    String sql =
+                            "DELETE FROM peserta WHERE id_peserta=?";
+
+                    PreparedStatement ps =
+                            con.prepareStatement(sql);
+
+                    ps.setInt(
+                            1,
+                            Integer.parseInt(
+                                    txtId.getText()
+                            )
+                    );
+
+                    ps.executeUpdate();
+
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Data berhasil dihapus"
+                    );
+
+                    loadData();
+                    resetForm();
+
+                } catch(Exception ex) {
+
+                    JOptionPane.showMessageDialog(
+                            null,
+                            ex.getMessage()
+                    );
+
+                }
+
+            }
+
+        });
+
+        btnReset.addActionListener(
+                e -> resetForm()
+        );
+
+        add(lblId);
+        add(txtId);
+
         add(lblNama);
         add(txtNama);
 
-        add(lblJurusan);
-        add(txtJurusan);
+        add(lblEmail);
+        add(txtEmail);
+
+        add(lblNoHp);
+        add(txtNoHp);
 
         add(btnTambah);
+        add(btnUpdate);
         add(btnHapus);
+        add(btnReset);
 
         add(scroll);
 
         loadData();
 
         setLocationRelativeTo(null);
+
         setDefaultCloseOperation(
                 JFrame.DISPOSE_ON_CLOSE
         );
@@ -136,21 +342,34 @@ public class PesertaForm extends JFrame {
             while(rs.next()) {
 
                 model.addRow(
-                        new Object[]{
+                        new Object[] {
                                 rs.getInt("id_peserta"),
-                                rs.getString("nama"),
-                                rs.getString("jurusan")
+                                rs.getString("nama_peserta"),
+                                rs.getString("email"),
+                                rs.getString("no_hp")
                         }
                 );
+
             }
 
         } catch(Exception e) {
 
-            System.out.println(
+            JOptionPane.showMessageDialog(
+                    null,
                     e.getMessage()
             );
 
         }
 
     }
+
+    private void resetForm() {
+
+        txtId.setText("");
+        txtNama.setText("");
+        txtEmail.setText("");
+        txtNoHp.setText("");
+
+    }
+
 }
